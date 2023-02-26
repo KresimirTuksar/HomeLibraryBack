@@ -8,5 +8,6 @@
 
         public List<Author> Authors { get; set; }
         public List<Genre> Genres { get; set; }
+        public Publisher Publisher { get; set; }
     }
 }

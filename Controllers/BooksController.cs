@@ -31,6 +31,7 @@ namespace HomeLibrary.Controllers
             var query = await _context.Books
                 .Include(x => x.Authors)
                 .Include(x => x.Genres)
+                .Include(x => x.Publisher)
                 .ToListAsync();
 
             var result = new List<BookResponse>();
@@ -41,7 +42,8 @@ namespace HomeLibrary.Controllers
                     Title = book.Title,
                     Isbn = book.Isbn,
                     Authors = ParseAuthors(book.Authors),
-                    Genres = ParseGenres(book.Genres)
+                    Genres = ParseGenres(book.Genres),
+                    Publisher = book.Publisher.Name
                 };
 
                 result.Add(bookResponse);
@@ -171,9 +173,35 @@ namespace HomeLibrary.Controllers
                         Name = genre,
                         Books = new List<Book> { book },
                     };
-                    _context.Genres.Add(bookGenre);
+
+                    var existingGenre = _context.Genres.Include(x => x.Books).FirstOrDefault(g => g.Name.ToLower() == bookGenre.Name.ToLower());
+
+                    if (existingGenre is not null)
+                    {
+                        existingGenre.Books.Add(book);
+                    }
+                    else
+                    {
+                        _context.Genres.Add(bookGenre);
+                    }
                 }
 
+                var bookPublisher = new Publisher
+                {
+                    Name = request.Publisher,
+                    Books = new List<Book> { book },
+                };
+
+                var existingPublisher = _context.Publishers.Include(x => x.Books).FirstOrDefault(p => p.Name.ToLower() == bookPublisher.Name.ToLower());
+
+                if (existingPublisher is not null)
+                {
+                    existingPublisher.Books.Add(book);
+                }
+                else
+                {
+                    _context.Publishers.Add(bookPublisher);
+                }
                 _context.Books.Add(book);
                 await _context.SaveChangesAsync();
 

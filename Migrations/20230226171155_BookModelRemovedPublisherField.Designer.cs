@@ -12,8 +12,8 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace HomeLibrary.Migrations
 {
     [DbContext(typeof(HomeLibraryDbContext))]
-    [Migration("20230121135624_BookGenreManyToManyFix")]
-    partial class BookGenreManyToManyFix
+    [Migration("20230226171155_BookModelRemovedPublisherField")]
+    partial class BookModelRemovedPublisherField
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -61,7 +61,17 @@ namespace HomeLibrary.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uniqueidentifier");
 
-                    b.Property<string>("Name")
+                    b.Property<string>("AuthorNormalized")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<DateTime>("BirthDate")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("FirstName")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("LastName")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
@@ -79,11 +89,16 @@ namespace HomeLibrary.Migrations
                     b.Property<long>("Isbn")
                         .HasColumnType("bigint");
 
+                    b.Property<Guid?>("PublisherId")
+                        .HasColumnType("uniqueidentifier");
+
                     b.Property<string>("Title")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
                     b.HasKey("Id");
+
+                    b.HasIndex("PublisherId");
 
                     b.ToTable("Books");
                 });
@@ -101,6 +116,21 @@ namespace HomeLibrary.Migrations
                     b.HasKey("Id");
 
                     b.ToTable("Genres");
+                });
+
+            modelBuilder.Entity("HomeLibrary.Models.Publisher", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("Publishers");
                 });
 
             modelBuilder.Entity("AuthorBook", b =>
@@ -131,6 +161,18 @@ namespace HomeLibrary.Migrations
                         .HasForeignKey("GenresId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
+                });
+
+            modelBuilder.Entity("HomeLibrary.Models.Book", b =>
+                {
+                    b.HasOne("HomeLibrary.Models.Publisher", null)
+                        .WithMany("Books")
+                        .HasForeignKey("PublisherId");
+                });
+
+            modelBuilder.Entity("HomeLibrary.Models.Publisher", b =>
+                {
+                    b.Navigation("Books");
                 });
 #pragma warning restore 612, 618
         }

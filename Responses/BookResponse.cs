@@ -9,6 +9,7 @@ namespace HomeLibrary.Responses
 
         public List<string> Authors { get; set; }
         public List<string> Genres { get; set; }
+        public string Publisher { get; set; }
 
     }
 }
