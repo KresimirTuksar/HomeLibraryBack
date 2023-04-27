@@ -6,6 +6,7 @@ using HomeLibrary.Requests;
 using Microsoft.OpenApi.Extensions;
 using HomeLibrary.Responses;
 using Microsoft.Identity.Client;
+using System.Linq;
 
 namespace HomeLibrary.Controllers
 {
@@ -54,7 +55,7 @@ namespace HomeLibrary.Controllers
 
         [HttpPost]
         [Route("getBooks")]
-        public async Task<ActionResult<List<BookResponse>>> GetBooks(GetBookRequest request)
+        public async Task<ActionResult<PaginatedResponseModel<List<BookResponse>>>> GetBooks(GetBookRequest request)
         {
 
             var query =  await _context.Books
@@ -72,7 +73,7 @@ namespace HomeLibrary.Controllers
                 query = query.Where(x => x.Authors.Any(x => x.FirstName.ToLower().Contains(request.Author.ToLower()))).ToList();
             }
 
-            var result = new List<BookResponse>();
+            var books = new List<BookResponse>();
             foreach (var book in query)
             {
                 var bookResponse = new BookResponse
@@ -82,9 +83,19 @@ namespace HomeLibrary.Controllers
                     Authors = ParseAuthors(book.Authors)
                 };
 
-                result.Add(bookResponse);
+                books.Add(bookResponse);
             }
 
+            var resultCount = books.Count();
+            books = books.Skip((request.Page-1) * request.Pagesize).Take(request.Pagesize).ToList();
+            var result = new PaginatedResponseModel<List<BookResponse>>()
+            {
+                Books = books,
+                TotalResultCount = resultCount,
+                Page = request.Page,
+                PageSize = request.Pagesize,
+                NumberOfPages =(int)Math.Ceiling((double)resultCount/request.Pagesize)
+            };
             return result;
         }
 
